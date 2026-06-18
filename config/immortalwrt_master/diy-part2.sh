@@ -53,3 +53,41 @@ git clone -b main https://github.com/ophub/luci-app-amlogic.git package/luci-app
 # git apply ../config/patches/{0001*,0002*}.patch --directory=feeds/luci
 #
 # ------------------------------- Additional customizations ends -------------------------------
+
+mkdir -p package/base-files/files/etc/uci-defaults
+
+cat <<'SCRIPT_EOF' > package/base-files/files/etc/uci-defaults/99-custom-settings
+#!/bin/sh
+
+uci -q batch <<UCI_EOF
+
+set network.lan.ipaddr='192.168.30.254'
+set network.lan.gateway='192.168.30.1'
+set network.lan.dns='223.5.5.5 8.8.8.8 114.114.114.114'
+
+set network.lan6=interface
+set network.lan6.proto='dhcpv6'
+set network.lan6.device='@lan'
+set network.lan6.reqaddress='try'
+set network.lan6.reqprefix='auto'
+set network.lan6.norelease='1'
+set network.lan6.sourcefilter='0'
+set network.lan6.delegate='0'
+commit network
+
+set dhcp.lan.ignore='1'
+commit dhcp
+
+set system.@system[0].hostname='x96max'
+set system.@system[0].zonename='Asia/Shanghai'
+set system.@system[0].timezone='CST-8'
+commit system
+
+add_list firewall.lan.network='lan6'
+commit firewall
+
+UCI_EOF
+
+SCRIPT_EOF
+
+chmod +x package/base-files/files/etc/uci-defaults/99-custom-settings
